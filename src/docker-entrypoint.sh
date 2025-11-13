@@ -41,23 +41,28 @@ if [ "${INPUT_CONFIG_FILE}" = "disabled" ]; then
 fi
 
 if [ -z "${INPUT_GIT_PUSH_USER_NAME}" ]; then
-    INPUT_GIT_PUSH_USER_NAME="github-actions[bot]"
+    INPUT_GIT_PUSH_USER_NAME="actions[bot]"
 fi
 
 if [ -z "${INPUT_GIT_PUSH_USER_EMAIL}" ]; then
-    INPUT_GIT_PUSH_USER_EMAIL="github-actions[bot]@users.noreply.github.com"
+    INPUT_GIT_PUSH_USER_EMAIL="actions[bot]@users.noreply.localhost"
 fi
 
+# Support both GitHub and Forgejo environment variables
+WORKSPACE="${FORGEJO_WORKSPACE:-${GITHUB_WORKSPACE}}"
+OUTPUT_PATH="${FORGEJO_OUTPUT:-${GITHUB_OUTPUT}}"
+
 if [ -n "${INPUT_GIT_SUB_DIR}" ]; then
-    GITHUB_WORKSPACE="${GITHUB_WORKSPACE}/${INPUT_GIT_SUB_DIR}"
-    echo "Using non-standard GITHUB_WORKSPACE of ${GITHUB_WORKSPACE}"
+    WORKSPACE="${WORKSPACE}/${INPUT_GIT_SUB_DIR}"
+    echo "Using non-standard workspace of ${WORKSPACE}"
 fi
 
 git_setup() {
-    # When the runner maps the $GITHUB_WORKSPACE mount, it is owned by the runner
-    # user while the created folders are owned by the container user, causing this
-    # error. Issue description here: https://github.com/actions/checkout/issues/766
-    git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+    # When the runner maps the workspace mount, it is owned by the runner
+    # user while the created folders are owned by the container user, causing
+    # permission issues. Works for both GitHub and Forgejo runners.
+    # See: https://github.com/actions/checkout/issues/766
+    git config --global --add safe.directory "${WORKSPACE}"
 
     git config --global user.name "${INPUT_GIT_PUSH_USER_NAME}"
     git config --global user.email "${INPUT_GIT_PUSH_USER_EMAIL}"
@@ -156,14 +161,14 @@ update_doc() {
     fi
 }
 
-# go to github repo
-cd "${GITHUB_WORKSPACE}"
+# go to repository workspace
+cd "${WORKSPACE}"
 
 git_setup
 
-if [ -f "${GITHUB_WORKSPACE}/${INPUT_ATLANTIS_FILE}" ]; then
+if [ -f "${WORKSPACE}/${INPUT_ATLANTIS_FILE}" ]; then
     # Parse an atlantis yaml file
-    for line in $(yq e '.projects[].dir' "${GITHUB_WORKSPACE}/${INPUT_ATLANTIS_FILE}"); do
+    for line in $(yq e '.projects[].dir' "${WORKSPACE}/${INPUT_ATLANTIS_FILE}"); do
         update_doc "${line//- /}"
     done
 elif [ -n "${INPUT_FIND_DIR}" ] && [ "${INPUT_FIND_DIR}" != "disabled" ]; then
@@ -182,7 +187,7 @@ fi
 set +e
 num_changed=$(git_status)
 set -e
-echo "num_changed=${num_changed}" >> "$GITHUB_OUTPUT"
+echo "num_changed=${num_changed}" >> "$OUTPUT_PATH"
 
 if [ "${INPUT_GIT_PUSH}" = "true" ]; then
     git_commit
