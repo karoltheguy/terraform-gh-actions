@@ -23,10 +23,14 @@ set -o errtrace
 # they appear as literal strings. We strip them out to use defaults instead.
 strip_template_expressions() {
     local value="$1"
+    # Debug: show what we're checking
+    echo "::debug Checking value: '$value'" >&2
     # If value contains ${{ or }}, it's an unevaluated expression
     if [[ "$value" == *'${{'* ]] || [[ "$value" == *'}}'* ]]; then
+        echo "::debug Stripped template expression from: '$value'" >&2
         echo ""
     else
+        echo "::debug Keeping value: '$value'" >&2
         echo "$value"
     fi
 }
