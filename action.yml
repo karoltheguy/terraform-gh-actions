@@ -1,6 +1,6 @@
 name: terraform-docs
 author: terraform-docs Authors
-description: Generate Terraform module documentation in pull requests
+description: Generate Terraform module documentation and commit changes automatically
 
 inputs:
   config-file:
@@ -59,11 +59,11 @@ inputs:
     required: false
     default: "false"
   git-push-user-name:
-    description: If empty the name of the GitHub Actions bot will be used (i.e. `github-actions[bot]`)
+    description: If empty the name of the CI bot will be used (i.e. `actions[bot]`)
     required: false
     default: ""
   git-push-user-email:
-    description: If empty the no-reply email of the GitHub Actions bot will be used (i.e. `github-actions[bot]@users.noreply.github.com`)
+    description: If empty the no-reply email of the CI bot will be used (i.e. `actions[bot]@users.noreply.localhost`)
     required: false
     default: ""
   git-commit-message:

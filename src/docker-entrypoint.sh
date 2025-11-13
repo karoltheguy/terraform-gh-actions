@@ -18,6 +18,56 @@ set -o errexit
 set -o pipefail
 set -o errtrace
 
+# Forgejo/act-runner compatibility: Remove unevaluated template expressions
+# When Forgejo doesn't properly interpolate ${{ inputs.* }} expressions,
+# they appear as literal strings. We strip them out to use defaults instead.
+strip_template_expressions() {
+    local value="$1"
+    # If value contains ${{ or }}, it's an unevaluated expression
+    if [[ "$value" == *'${{'* ]] || [[ "$value" == *'}}'* ]]; then
+        echo ""
+    else
+        echo "$value"
+    fi
+}
+
+# Clean all INPUT variables that might contain template expressions
+INPUT_OUTPUT_FORMAT=$(strip_template_expressions "${INPUT_OUTPUT_FORMAT}")
+INPUT_ARGS=$(strip_template_expressions "${INPUT_ARGS}")
+INPUT_TEMPLATE=$(strip_template_expressions "${INPUT_TEMPLATE}")
+INPUT_INDENTION=$(strip_template_expressions "${INPUT_INDENTION}")
+INPUT_OUTPUT_METHOD=$(strip_template_expressions "${INPUT_OUTPUT_METHOD}")
+INPUT_OUTPUT_FILE=$(strip_template_expressions "${INPUT_OUTPUT_FILE}")
+INPUT_CONFIG_FILE=$(strip_template_expressions "${INPUT_CONFIG_FILE}")
+INPUT_RECURSIVE=$(strip_template_expressions "${INPUT_RECURSIVE}")
+INPUT_RECURSIVE_PATH=$(strip_template_expressions "${INPUT_RECURSIVE_PATH}")
+INPUT_WORKING_DIR=$(strip_template_expressions "${INPUT_WORKING_DIR}")
+INPUT_ATLANTIS_FILE=$(strip_template_expressions "${INPUT_ATLANTIS_FILE}")
+INPUT_FIND_DIR=$(strip_template_expressions "${INPUT_FIND_DIR}")
+INPUT_GIT_PUSH=$(strip_template_expressions "${INPUT_GIT_PUSH}")
+INPUT_GIT_PUSH_USER_NAME=$(strip_template_expressions "${INPUT_GIT_PUSH_USER_NAME}")
+INPUT_GIT_PUSH_USER_EMAIL=$(strip_template_expressions "${INPUT_GIT_PUSH_USER_EMAIL}")
+INPUT_GIT_COMMIT_MESSAGE=$(strip_template_expressions "${INPUT_GIT_COMMIT_MESSAGE}")
+INPUT_GIT_PUSH_SIGN_OFF=$(strip_template_expressions "${INPUT_GIT_PUSH_SIGN_OFF}")
+INPUT_GIT_SUB_DIR=$(strip_template_expressions "${INPUT_GIT_SUB_DIR}")
+INPUT_FAIL_ON_DIFF=$(strip_template_expressions "${INPUT_FAIL_ON_DIFF}")
+
+# Use defaults if values were stripped or empty (must match action.yml defaults)
+INPUT_OUTPUT_FORMAT="${INPUT_OUTPUT_FORMAT:-markdown table}"
+INPUT_INDENTION="${INPUT_INDENTION:-2}"
+INPUT_OUTPUT_METHOD="${INPUT_OUTPUT_METHOD:-inject}"
+INPUT_OUTPUT_FILE="${INPUT_OUTPUT_FILE:-README.md}"
+INPUT_CONFIG_FILE="${INPUT_CONFIG_FILE:-disabled}"
+INPUT_RECURSIVE="${INPUT_RECURSIVE:-false}"
+INPUT_RECURSIVE_PATH="${INPUT_RECURSIVE_PATH:-modules}"
+INPUT_WORKING_DIR="${INPUT_WORKING_DIR:-.}"
+INPUT_ATLANTIS_FILE="${INPUT_ATLANTIS_FILE:-disabled}"
+INPUT_FIND_DIR="${INPUT_FIND_DIR:-disabled}"
+INPUT_GIT_PUSH="${INPUT_GIT_PUSH:-false}"
+INPUT_GIT_COMMIT_MESSAGE="${INPUT_GIT_COMMIT_MESSAGE:-terraform-docs: automated action}"
+INPUT_GIT_PUSH_SIGN_OFF="${INPUT_GIT_PUSH_SIGN_OFF:-false}"
+INPUT_FAIL_ON_DIFF="${INPUT_FAIL_ON_DIFF:-false}"
+
 # shellcheck disable=SC2206
 cmd_args=(${INPUT_OUTPUT_FORMAT})
 
