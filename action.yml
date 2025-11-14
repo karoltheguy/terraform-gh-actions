@@ -89,7 +89,7 @@ outputs:
 
 runs:
   using: docker
-  image: "docker://quay.io/terraform-docs/gh-actions:1.4.1"
+  image: Dockerfile
   env:
     INPUT_WORKING_DIR: ${{ inputs.working-dir }}
     INPUT_ATLANTIS_FILE: ${{ inputs.atlantis-file }}
